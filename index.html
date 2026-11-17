@@ -1,0 +1,411 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Biblioteca Escolar</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #f1f4f9;
+    color: #333;
+}
+
+header {
+    background: #243b55;
+    color: white;
+    text-align: center;
+    padding: 30px;
+}
+
+header h1 {
+    margin-bottom: 10px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+.menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+button {
+    border: none;
+    padding: 12px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #243b55;
+    color: white;
+    font-size: 14px;
+}
+
+button:hover {
+    background: #3c6382;
+}
+
+section {
+    display: none;
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px #0001;
+}
+
+section.ativa {
+    display: block;
+}
+
+h2 {
+    margin-bottom: 20px;
+    color: #243b55;
+}
+
+input {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.btn-acao {
+    background: #198754;
+}
+
+.btn-devolver {
+    background: #dc3545;
+}
+
+.livro, .emprestimo {
+    padding: 15px;
+    margin-bottom: 12px;
+    background: #f4f6f9;
+    border-left: 5px solid #243b55;
+    border-radius: 5px;
+}
+
+.disponivel {
+    color: green;
+    font-weight: bold;
+}
+
+.emprestado {
+    color: red;
+    font-weight: bold;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>📚 Biblioteca Escolar</h1>
+    <p>Sistema de gerenciamento de livros e empréstimos</p>
+</header>
+
+<div class="container">
+
+    <nav class="menu">
+        <button onclick="mostrar('cadastro')">Cadastrar livro</button>
+        <button onclick="mostrar('lista')">Listar livros</button>
+        <button onclick="mostrar('emprestimo')">Emprestar livro</button>
+        <button onclick="mostrar('devolucao')">Devolver livro</button>
+        <button onclick="mostrar('historico')">Histórico</button>
+    </nav>
+
+    <!-- CADASTRO -->
+    <section id="cadastro" class="ativa">
+        <h2>Cadastro de Livro</h2>
+
+        <input type="text" id="titulo" placeholder="Título do livro">
+        <input type="text" id="autor" placeholder="Nome do autor">
+        <input type="text" id="codigo" placeholder="Código do livro">
+
+        <button class="btn-acao" onclick="cadastrarLivro()">
+            Cadastrar livro
+        </button>
+    </section>
+
+    <!-- LISTAGEM -->
+    <section id="lista">
+        <h2>Livros Cadastrados</h2>
+        <div id="listaLivros"></div>
+    </section>
+
+    <!-- EMPRÉSTIMO -->
+    <section id="emprestimo">
+        <h2>Empréstimo de Livro</h2>
+
+        <input type="text" id="codigoEmprestimo"
+        placeholder="Código do livro">
+
+        <input type="text" id="alunoEmprestimo"
+        placeholder="Nome do aluno">
+
+        <button class="btn-acao" onclick="emprestarLivro()">
+            Realizar empréstimo
+        </button>
+    </section>
+
+    <!-- DEVOLUÇÃO -->
+    <section id="devolucao">
+        <h2>Devolução de Livro</h2>
+
+        <input type="text" id="codigoDevolucao"
+        placeholder="Código do livro">
+
+        <input type="text" id="alunoDevolucao"
+        placeholder="Nome do aluno">
+
+        <button class="btn-devolver" onclick="devolverLivro()">
+            Realizar devolução
+        </button>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section id="historico">
+        <h2>Histórico de Empréstimos</h2>
+        <div id="listaHistorico"></div>
+    </section>
+
+</div>
+
+<footer>
+    Sistema de Biblioteca Escolar © 2026
+</footer>
+
+<script>
+
+// CARREGAR DADOS
+let livros = JSON.parse(localStorage.getItem("livros")) || [];
+let emprestimos = JSON.parse(localStorage.getItem("emprestimos")) || [];
+
+function salvarDados() {
+    localStorage.setItem("livros", JSON.stringify(livros));
+    localStorage.setItem("emprestimos", JSON.stringify(emprestimos));
+}
+
+// TROCAR DE TELA
+function mostrar(id) {
+    document.querySelectorAll("section").forEach(secao => {
+        secao.classList.remove("ativa");
+    });
+
+    document.getElementById(id).classList.add("ativa");
+
+    if (id === "lista") listarLivros();
+    if (id === "historico") historicoEmprestimos();
+}
+
+// CADASTRAR LIVRO
+function cadastrarLivro() {
+    let titulo = document.getElementById("titulo").value.trim();
+    let autor = document.getElementById("autor").value.trim();
+    let codigo = document.getElementById("codigo").value.trim();
+
+    if (!titulo || !autor || !codigo) {
+        alert("Preencha todos os campos!");
+        return;
+    }
+
+    if (livros.some(livro => livro.codigo === codigo)) {
+        alert("Já existe um livro com esse código!");
+        return;
+    }
+
+    livros.push({
+        codigo,
+        titulo,
+        autor,
+        disponivel: true
+    });
+
+    salvarDados();
+
+    alert("Livro cadastrado com sucesso!");
+
+    document.getElementById("titulo").value = "";
+    document.getElementById("autor").value = "";
+    document.getElementById("codigo").value = "";
+}
+
+// LISTAR LIVROS
+function listarLivros() {
+    let area = document.getElementById("listaLivros");
+
+    if (livros.length === 0) {
+        area.innerHTML = "<p>Nenhum livro cadastrado.</p>";
+        return;
+    }
+
+    area.innerHTML = "";
+
+    livros.forEach(livro => {
+        let status = livro.disponivel
+            ? '<span class="disponivel">Disponível</span>'
+            : '<span class="emprestado">Emprestado</span>';
+
+        area.innerHTML += `
+            <div class="livro">
+                <h3>${escapar(livro.titulo)}</h3>
+                <p><strong>Código:</strong> ${escapar(livro.codigo)}</p>
+                <p><strong>Autor:</strong> ${escapar(livro.autor)}</p>
+                <p><strong>Situação:</strong> ${status}</p>
+            </div>
+        `;
+    });
+}
+
+// EMPRESTAR LIVRO
+function emprestarLivro() {
+    let codigo = document.getElementById("codigoEmprestimo").value.trim();
+    let aluno = document.getElementById("alunoEmprestimo").value.trim();
+
+    if (!codigo || !aluno) {
+        alert("Preencha todos os campos!");
+        return;
+    }
+
+    let livro = livros.find(l => l.codigo === codigo);
+
+    if (!livro) {
+        alert("Livro não encontrado!");
+        return;
+    }
+
+    if (!livro.disponivel) {
+        alert("Este livro já está emprestado!");
+        return;
+    }
+
+    let hoje = new Date();
+    let devolucao = new Date(hoje);
+    devolucao.setDate(devolucao.getDate() + 7);
+
+    emprestimos.push({
+        codigo: codigo,
+        titulo: livro.titulo,
+        aluno: aluno,
+        dataEmprestimo: formatarData(hoje),
+        dataDevolucao: formatarData(devolucao),
+        devolvido: false
+    });
+
+    livro.disponivel = false;
+
+    salvarDados();
+
+    alert("Empréstimo realizado com sucesso!\nDevolução prevista: " + formatarData(devolucao));
+
+    document.getElementById("codigoEmprestimo").value = "";
+    document.getElementById("alunoEmprestimo").value = "";
+}
+
+// DEVOLVER LIVRO
+function devolverLivro() {
+    let codigo = document.getElementById("codigoDevolucao").value.trim();
+    let aluno = document.getElementById("alunoDevolucao").value.trim();
+
+    if (!codigo || !aluno) {
+        alert("Preencha todos os campos!");
+        return;
+    }
+
+    let emprestimo = emprestimos.find(e =>
+        e.codigo === codigo &&
+        e.aluno.toLowerCase() === aluno.toLowerCase() &&
+        !e.devolvido
+    );
+
+    if (!emprestimo) {
+        alert("Empréstimo não encontrado!");
+        return;
+    }
+
+    emprestimo.devolvido = true;
+
+    let livro = livros.find(l => l.codigo === codigo);
+
+    if (livro) {
+        livro.disponivel = true;
+    }
+
+    salvarDados();
+
+    alert("Devolução realizada com sucesso!");
+
+    document.getElementById("codigoDevolucao").value = "";
+    document.getElementById("alunoDevolucao").value = "";
+}
+
+// HISTÓRICO
+function historicoEmprestimos() {
+    let area = document.getElementById("listaHistorico");
+
+    if (emprestimos.length === 0) {
+        area.innerHTML = "<p>Nenhum empréstimo registrado.</p>";
+        return;
+    }
+
+    area.innerHTML = "";
+
+    emprestimos.forEach(emp => {
+        let status = emp.devolvido
+            ? "Devolvido"
+            : "Pendente";
+
+        area.innerHTML += `
+            <div class="emprestimo">
+                <h3>${escapar(emp.titulo)}</h3>
+                <p><strong>Aluno:</strong> ${escapar(emp.aluno)}</p>
+                <p><strong>Código:</strong> ${escapar(emp.codigo)}</p>
+                <p><strong>Empréstimo:</strong> ${emp.dataEmprestimo}</p>
+                <p><strong>Devolução prevista:</strong> ${emp.dataDevolucao}</p>
+                <p><strong>Situação:</strong> ${status}</p>
+            </div>
+        `;
+    });
+}
+
+// FORMATAR DATA
+function formatarData(data) {
+    return data.toLocaleDateString("pt-BR");
+}
+
+// PROTEGER TEXTO EXIBIDO NO HTML
+function escapar(valor) {
+    return String(valor).replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[caractere]);
+}
+
+</script>
+
+</body>
+</html>
